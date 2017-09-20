@@ -110,7 +110,7 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
 	if len(s.nameNetworkBindingsMap[*cd.Name]) == 0 {
 		return nil, errors.New("container has no network bindings. skipping")
 	}
-	virtualHost, virtualPort, envVariables := extractVars(cd.Environment, s.hostVar)
+	virtualHost, virtualPort, virtualProtocal, envVariables := extractVars(cd.Environment, s.hostVar)
 	if virtualHost == "" {
 		return nil, errors.New("[" + *cd.Name + "] " + s.hostVar + " environment variable not found. skipping")
 	}
@@ -123,9 +123,13 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
 	if port == "" {
 		return nil, errors.New("[" + *cd.Name + "] no valid port configuration found. skipping")
 	}
+	if virtualProtocal == "" {
+		virtualProtocal = "http"
+	}
 	return &container{
 		Host:    virtualHost,
 		Port:    port,
+		Protocal: virtualProtocal,
 		Env:     envVariables,
 		Address: s.idAddressMap[*t.ContainerInstanceArn],
 	}, nil
@@ -140,10 +144,11 @@ func extractHostPort(virtualPort string, nbs []*ecs.NetworkBinding) string {
 	return ""
 }
 
-func extractVars(env []*ecs.KeyValuePair, hostVar string) (string, string, map[string]string) {
+func extractVars(env []*ecs.KeyValuePair, hostVar string) (string, string, string, map[string]string) {
 	envVariables := make(map[string]string)
 	virtualHost := ""
 	virtualPort := ""
+	virtualProtocal := ""
 
 	for _, e := range env {
 		envVariables[*e.Name] = *e.Value
@@ -151,7 +156,9 @@ func extractVars(env []*ecs.KeyValuePair, hostVar string) (string, string, map[s
 			virtualHost = *e.Value
 		} else if strings.ToLower(*e.Name) == "virtual_port" {
 			virtualPort = *e.Value
+		} else if strings.ToLower(*e.Name) == "virtual_protocal" {
+			virtualProtocal = *e.Value
 		}
 	}
-	return virtualHost, virtualPort, envVariables
+	return virtualHost, virtualPort, virtualProtocal, envVariables
 }

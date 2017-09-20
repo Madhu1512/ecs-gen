@@ -21,6 +21,7 @@ type container struct {
 	Host    string
 	Port    string
 	Address string
+	Protocal string
 	Env     map[string]string
 }
 
