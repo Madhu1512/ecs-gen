@@ -24,7 +24,7 @@ clean:
 	rm -rf build
 
 deps:
-	glide install
+	glide update install
 
 zip:
 	for file in build/*; do \
