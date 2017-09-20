@@ -1,11 +1,11 @@
 package: github.com/madhu1512/ecs-gen
 import:
 - package: github.com/aws/aws-sdk-go
-  version: ^1.5.10
+  version: ^1.10.48
   subpackages:
   - aws
   - aws/session
   - service/ec2
   - service/ecs
 - package: gopkg.in/alecthomas/kingpin.v2
-  version: ^2.2.3
+  version: ^2.2.5
