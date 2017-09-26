@@ -22,6 +22,7 @@ type container struct {
 	Port    string
 	Address string
 	Protocal string
+	Auth     bool
 	Env     map[string]string
 }
 

@@ -110,7 +110,7 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
 	if len(s.nameNetworkBindingsMap[*cd.Name]) == 0 {
 		return nil, errors.New("container has no network bindings. skipping")
 	}
-	virtualHost, virtualPort, virtualProtocal, envVariables := extractVars(cd.Environment, s.hostVar)
+	virtualHost, virtualPort, virtualProtocal, virtualAuth, envVariables := extractVars(cd.Environment, s.hostVar)
 	if virtualHost == "" {
 		return nil, errors.New("[" + *cd.Name + "] " + s.hostVar + " environment variable not found. skipping")
 	}
@@ -126,11 +126,17 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
 	if virtualProtocal == "" {
 		virtualProtocal = "http"
 	}
+	auth := false
+	if virtualAuth == "true" {
+		auth = true
+	}
+
 	return &container{
 		Host:    virtualHost,
 		Port:    port,
 		Protocal: virtualProtocal,
 		Env:     envVariables,
+		Auth: auth,
 		Address: s.idAddressMap[*t.ContainerInstanceArn],
 	}, nil
 }
@@ -144,12 +150,12 @@ func extractHostPort(virtualPort string, nbs []*ecs.NetworkBinding) string {
 	return ""
 }
 
-func extractVars(env []*ecs.KeyValuePair, hostVar string) (string, string, string, map[string]string) {
+func extractVars(env []*ecs.KeyValuePair, hostVar string) (string, string, string, string, map[string]string) {
 	envVariables := make(map[string]string)
 	virtualHost := ""
 	virtualPort := ""
 	virtualProtocal := ""
-
+	virtualAuth := ""
 	for _, e := range env {
 		envVariables[*e.Name] = *e.Value
 		if strings.ToLower(*e.Name) == strings.ToLower(hostVar) {
@@ -158,7 +164,9 @@ func extractVars(env []*ecs.KeyValuePair, hostVar string) (string, string, strin
 			virtualPort = *e.Value
 		} else if strings.ToLower(*e.Name) == "virtual_protocal" {
 			virtualProtocal = *e.Value
+		} else if strings.ToLower(*e.Name) == "virtual_auth" {
+			virtualAuth = *e.Value
 		}
 	}
-	return virtualHost, virtualPort, virtualProtocal, envVariables
+	return virtualHost, virtualPort, virtualProtocal, virtualAuth, envVariables
 }
